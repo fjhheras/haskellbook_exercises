@@ -1,0 +1,69 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: e492e50fb75e280f77505b8b5a4e6812d1c016ff822adf95ea65b9a10e949c54
+
+name:           morse
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/fjhheras/morse#readme>
+homepage:       https://github.com/fjhheras/morse#readme
+bug-reports:    https://github.com/fjhheras/morse/issues
+author:         F.J.H. Heras
+maintainer:     fjhheras@gmail.com
+copyright:      F.J.H. Heras
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/fjhheras/morse
+
+library
+  exposed-modules:
+      Lib
+      Morse
+  other-modules:
+      Paths_morse
+  hs-source-dirs:
+      src
+  build-depends:
+      QuickCheck
+    , base >=4.7 && <5
+    , containers
+  default-language: Haskell2010
+
+executable morse
+  main-is: Main.hs
+  other-modules:
+      Paths_morse
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , base >=4.7 && <5
+    , containers
+    , morse
+  default-language: Haskell2010
+
+test-suite morse-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_morse
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , base >=4.7 && <5
+    , containers
+    , morse
+  default-language: Haskell2010
