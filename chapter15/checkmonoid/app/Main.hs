@@ -38,7 +38,7 @@ instance (Arbitrary a) => Arbitrary (Identity a) where
 type IdentityAssoc a =
     (Identity a) -> (Identity a) -> (Identity a) -> Bool
 
--- Two
+-- Two 
 
 data Two a b = Two a b deriving (Eq, Show)
 
@@ -88,12 +88,75 @@ instance (Arbitrary a, Arbitrary b) => Arbitrary (Or a b) where
 type OrAssoc a b =
   (Or a b) -> (Or a b) -> (Or a b) -> Bool
 
+-- Combine
 
+newtype Comp a = Comp {unComp :: (a -> a)}
+
+instance Semigroup (Comp a) where
+    f <> g = Comp $ (unComp g).(unComp f)
+    
+-- Not sure how to test this...
+-- 
+--
+
+-- TESTING MONOID
+
+monoidLeftIdentity :: (Eq m, Monoid m)
+                   => m
+		   -> Bool
+monoidLeftIdentity a = (mempty <> a) == a
+
+monoidRightIdentity :: (Eq m, Monoid m)
+                   => m
+		   -> Bool
+monoidRightIdentity a = (a <> mempty) == a
+
+-- Three
+
+data Three a b c = Three a b c deriving (Eq, Show)
+
+instance (Semigroup a, Semigroup b, Semigroup c) => Semigroup (Three a b c) where
+  (Three xx yy zz) <> (Three x y z) = Three (xx<>x) (yy<>y) (zz<>z) 
+
+instance (Monoid a, Monoid b, Monoid c) => Monoid (Three a b c) where
+  mempty = Three mempty mempty mempty
+  mappend = (<>)
+
+instance (Arbitrary a, Arbitrary b, Arbitrary c) => Arbitrary (Three a b c) where
+    arbitrary = do
+        x <- arbitrary
+	y <- arbitrary
+	z <- arbitrary
+        return $ Three x y z
+
+type ThreeAssoc a b c =
+    (Three a b c) -> (Three a b c) -> (Three a b c) -> Bool
+
+-- Mem
+
+newtype Mem s a = Mem {runMem :: s -> (a,s)}
+
+instance Semigroup a => Semigroup (Mem s a) where
+  mem1<>mem2 = Mem fn where
+    fn s = 
+      let 
+        (a1, s1) = (runMem mem1) s
+        (a2, s2) = (runMem mem2) s1
+      in
+	(a1<>a2, s2)
+
+instance Monoid a => Monoid (Mem s a) where
+   mempty = Mem fempty where
+     fempty s = (mempty, s)
+   mappend = (<>)
+
+f' = Mem $ \s -> ("hi", s + 1)
 
 
 main :: IO()
-main = do 
+main = do
   quickCheck (semigroupAssoc :: TrivAssoc)
+  
   quickCheck (semigroupAssoc :: IdentityAssoc [Int])
   
   putStrLn $ show $ (Two [1] (Sum 2)) <> (Two [1] (Sum 2))
@@ -103,3 +166,19 @@ main = do
   quickCheck (semigroupAssoc :: BoolConjAssoc)
 
   quickCheck (semigroupAssoc :: OrAssoc Int Int)
+
+  quickCheck (semigroupAssoc :: ThreeAssoc [Int] [Int] [Int]) 
+  quickCheck (monoidRightIdentity :: (Three [Int] [Int] [Int]) -> Bool)
+  quickCheck (monoidLeftIdentity :: (Three [Int] [Int] [Int]) -> Bool)
+
+  let rmzero = runMem mempty 0
+      rmleft = runMem (f' <> mempty) 0
+      rmright = runMem (mempty <> f') 0
+  print "Mem sanity check"
+  print $ rmleft
+  print $ rmright
+  print $ (rmzero :: (String, Int))
+  print $ rmleft == runMem f' 0
+  print $ rmright == runMem f' 0
+
+
