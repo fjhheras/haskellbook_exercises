@@ -18,3 +18,4 @@ instance Monoid a => Monoid (ZipList a) where
 main :: IO ()
 main = do
   quickBatch $ monoid (ZipList [1 :: Sum Int])
+  -- everything runs but mconcat: runs forever

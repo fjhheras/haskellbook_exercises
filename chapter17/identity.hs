@@ -1,4 +1,4 @@
-module Ch17identity where
+module Main where
 
 import Data.Monoid
 -- I do not understand why import Data.Monoid (Sum, ) does not work
