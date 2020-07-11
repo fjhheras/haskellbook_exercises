@@ -48,4 +48,12 @@ executable ziplist
   -- hs-source-dirs:
   default-language:    Haskell2010
 
+executable validation
+  main-is:             validation.hs
+  -- other-modules:
+  -- other-extensions:
+  build-depends:       QuickCheck, checkers, base >=4.13 && <4.14
+  -- hs-source-dirs:
+  default-language:    Haskell2010
+
 
