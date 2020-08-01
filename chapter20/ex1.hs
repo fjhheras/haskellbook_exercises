@@ -38,7 +38,7 @@ fold' :: (Foldable t, Monoid m) => t m -> m
 fold' = foldMap id
 
 foldMap' :: (Foldable t, Monoid m) => (a -> m) -> t a -> m
-foldMap' = undefined
+foldMap' f = foldr (\x y -> f x <> y) mempty
 
 main :: IO ()
 main = do
