@@ -1,8 +1,11 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Main where
 
 import           Test.QuickCheck
 import           Test.QuickCheck.Checkers
 import           Test.QuickCheck.Classes
+
 
 newtype Identity a = Identity a deriving (Eq, Ord, Show)
 
@@ -119,9 +122,58 @@ instance (Arbitrary a, Arbitrary b) => Arbitrary (Big a b) where
 instance (Eq a, Eq b) => EqProp (Big a b) where
         (=-=) = eq
 
+--
 
+data S n a = S (n a) a deriving (Eq, Show)
 
-type TI = Big Int
+-- Test for functor fail...
+instance (Functor n) => Functor (S n) where
+        fmap f (S na a) = S (fmap f na) (f a)
+
+instance (Foldable n) => Foldable (S n) where
+        foldMap f (S na a) = f a <> foldMap f na
+
+-- test for traversable fail as well...
+instance Traversable n => Traversable (S n) where
+        traverse f (S na a) = S <$> (traverse f na) <*> f a
+
+instance (Functor n, Arbitrary (n a), Arbitrary a) => Arbitrary (S n a) where
+        arbitrary = S <$> arbitrary <*> arbitrary
+
+instance (Applicative n, Testable (n Property),  EqProp a) => EqProp (S n a) where
+        (S x y) =-= (S p q) = (property $ (=-=) <$> x <*> p) .&. (y =-= q)
+
+---
+
+data Tree a = Empty | Leaf a | Node (Tree a) a (Tree a) deriving (Eq, Show)
+
+instance Functor Tree where
+        fmap _ Empty          = Empty
+        fmap f (Leaf x      ) = Leaf (f x)
+        fmap f (Node t1 x t2) = Node (f <$> t1) (f x) (f <$> t2)
+
+instance Foldable Tree where
+        foldMap _ Empty          = mempty
+        foldMap f (Leaf x      ) = f x
+        foldMap f (Node t1 x t2) = foldMap f t1 <> f x <> foldMap f t2
+
+instance Traversable Tree where
+        traverse _ Empty    = pure Empty
+        traverse f (Leaf x) = Leaf <$> f x
+        traverse f (Node t1 x t2) =
+                Node <$> traverse f t1 <*> f x <*> traverse f t2
+
+instance (Arbitrary a) => Arbitrary (Tree a) where
+        arbitrary = oneof
+                [ pure Empty
+                , Leaf <$> arbitrary
+                , Node <$> arbitrary <*> arbitrary <*> arbitrary
+                ]
+
+instance (Eq a) => EqProp (Tree a) where
+        (=-=) = eq
+
+type TI = Tree
 
 main :: IO ()
 main = do
